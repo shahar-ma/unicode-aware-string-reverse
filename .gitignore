@@ -46,6 +46,7 @@ bld/
 [Oo]ut/
 [Ll]og/
 [Ll]ogs/
+[Oo]ut/
 
 # Build results on 'Bin' directories
 **/[Bb]in/*
@@ -61,10 +62,20 @@ bld/
 # Visual Studio 2017 auto generated files
 Generated\ Files/
 
+## Source-generator / tooling output that lands outside bin|obj
+## (e.g. BenchmarkProfilerAgentConfig.g.cs from the VS diagnostics
+## hub package, written directly into the project folder)
+*.g.cs
+
 # MSTest test Results
 [Tt]est[Rr]esult*/
 [Bb]uild[Ll]og.*
 *.trx
+
+## Test Results
+*.coverage
+*.coveragexml
+coverage.cobertura.xml
 
 # NUnit
 *.VisualState.xml
@@ -230,6 +241,7 @@ PublishScripts/
 **/[Pp]ackages/*
 # except build/, which is used as an MSBuild target.
 !**/[Pp]ackages/build/
+.nuget/
 # Uncomment if necessary however generally it will be regenerated when needed
 #!**/[Pp]ackages/repositories.config
 # NuGet v3's project.json files produces more ignorable files
@@ -427,3 +439,12 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+## Rider
+.idea/
+*.sln.iml
+
+## OS/editor cruft
+.DS_Store
+Thumbs.db
+*.swp
