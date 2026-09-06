@@ -30,12 +30,12 @@ public class StringReverseTests
         // "e" + U+0301 COMBINING ACUTE ACCENT, decomposed form of e-acute.
         string e = "e\u0301";
         string input = "caf" + e; // "cafe<combining acute>"
-        string result = input.Reverse();
+        string result = input.Reverse()!;
 
         // The combining mark must still immediately follow its base
         // "e" in the output, not have been moved to the front.
         Assert.Equal(e + "fac", result);
-        result = input.ReverseString();
+        result = input.ReverseString()!;
         Assert.NotEqual(e + "fac", result);
     }
 
@@ -111,18 +111,17 @@ public class StringReverseTests
         // "a" with two stacked combining marks (grave + dot below).
         string cluster = "a\u0300\u0323";
         string input = "x" + cluster + "y";
-        string result = input.Reverse();
+        string result = input.Reverse()!;
         Assert.Equal("y" + cluster + "x", result);
-        result = input.ReverseString();
+        result = input.ReverseString()!;
         Assert.NotEqual("y" + cluster + "x", result);
     }
 
-    [ExcludeFromCodeCoverage]
     [Fact]
-    public void Null_ThrowsArgumentNullException()
+    public void Null_ReturnNull()
     {
-        Assert.Throws<ArgumentNullException>(() => StringExtensions.Reverse(null));
-        Assert.Throws<ArgumentNullException>(() => StringExtensions.ReverseString(null));
+        Assert.Null(StringExtensions.Reverse(null));
+        Assert.Null(StringExtensions.ReverseString(null));
     }
     [Theory]
     [InlineData("a")]
@@ -205,7 +204,7 @@ public class StringReverseTests
         // Sanity: result must not contain a broken/reordered surrogate
         // pair anywhere (i.e. every high surrogate must be immediately
         // followed by its matching low surrogate).
-        input = input.Reverse();
+        input = input.Reverse()!;
         Assert.NotNull(input);
         AssertNoBrokenSurrogates(input);
         Assert.NotEqual(expected, input.ReverseString());
@@ -228,10 +227,10 @@ public class StringReverseTests
         string astralBase = "\uD83D\uDE00";      // 😀 (2 code units)
         string cluster = astralBase + "\u0301";  // base + combining acute
         string input = "x" + cluster + "y";
-        string result = input.Reverse();
+        string result = input.Reverse()!;
         Assert.Equal("y" + cluster + "x", result);
         AssertNoBrokenSurrogates(result);
-        result = input.ReverseString();
+        result = input.ReverseString()!;
         Assert.NotEqual("y" + cluster + "x", result);
     }
 
@@ -262,24 +261,24 @@ public class StringReverseTests
         Assert.Equal(spaces, spaces.ReverseString());
     }
 
+    [ExcludeFromCodeCoverage]
     private static void AssertNoBrokenSurrogates(string s)
     {
-        bool skip = false;
-        for (int index = 0; index < s.Length; index++)
+        int index = 0;
+        while (index < s.Length)
         {
-            if (skip)
+            char c = s[index];
+
+            if (char.IsHighSurrogate(c))
             {
-                skip = false;
-                continue;
-            }
-            if (char.IsHighSurrogate(s[index]) && char.IsLowSurrogate(s[index + 1]))
-            {
-                Assert.True(index + 1 < s.Length, $"Unpaired high surrogate at index {index}");
-                skip = true; // skip the low surrogate we just validated
+                bool hasLow = index + 1 < s.Length && char.IsLowSurrogate(s[index + 1]);
+                Assert.True(hasLow, $"Unpaired high surrogate at index {index}");
+                index += 2; // Step over the full pair
             }
             else
             {
-                Assert.False(char.IsLowSurrogate(s[index]), $"Unpaired low surrogate at index {index}");
+                Assert.False(char.IsLowSurrogate(c), $"Unpaired low surrogate at index {index}");
+                index += 1; // Step over the single character
             }
         }
     }
@@ -288,13 +287,13 @@ public class StringReverseTests
         // Either no orphan mark was prepended, or the body was
         // empty and s is just the single mark char - both are
         // covered by the normal round-trip guarantee.
-        string once = str.Reverse();
-        string twice = once.Reverse();
+        string once = str.Reverse()!;
+        string twice = once.Reverse()!;
         Assert.Equal(str, twice);
         Assert.Equal(str.Length, once.Length);
         AssertNoBrokenSurrogates(once);
-        once = str.ReverseString();
-        twice = once.ReverseString();
+        once = str.ReverseString()!;
+        twice = once.ReverseString()!;
         Assert.Equal(str, twice);
         Assert.Equal(str.Length, once.Length);
     }

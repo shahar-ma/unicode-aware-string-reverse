@@ -14,50 +14,70 @@ internal static class StringExtensionsInternal
     private const char SPACE = ' ';
     private const string TEXT_ELEMENT = "t";
     private const string VALUE_ELEMENT = "v";
+    private static readonly char[] NonMarkChars = [.. Enumerable.Range(0x0080, 0x10000 - 0x0080)
+            .Select(i => (char)i)
+            .Where(c => !char.IsSurrogate(c) && 
+                        !CharUnicodeInfo.GetUnicodeCategory(c).IsUnicodeCategoryMark())];
 
     internal static string BuildBmpUnicode(this Random rng, int length)
     {
-        StringBuilder sb = new(length);
-        for (int index = 0; index < length; index++)
+        if (length == 0) return string.Empty;
+
+        return string.Create(length, rng, static (span, random) =>
         {
-            sb.Append(rng.RandomNonMarkBmpChar());
-        }
-        return sb.ToString();
+            random.GetItems(NonMarkChars, span);
+        });
     }
 
     internal static string BuildCombiningMarks(this Random rng, int length)
     {
-        StringBuilder sb = new(length);
-        int written = 0;
-        while (written + 1 < length)
+        if (length == 0) return string.Empty;
+
+        return string.Create(length, rng, static (span, random) =>
         {
-            char baseChar = (char)rng.Next('a', 'z' + 1);
-            char mark = (char)rng.Next(StringExtensions.MinDiacriticsBlockValue, StringExtensions.LatinCapitalLetterLjWithCaron); // combining diacritics block
-            sb.Append(baseChar).Append(mark);
-            written += 2;
-        }
-        if (written < length)
-        {
-            sb.Append('x');
-        }
-        return sb.ToString();
+            int i = 0;
+            int maxPairIndex = span.Length - 1;
+
+            while (i < maxPairIndex)
+            {
+                span[i] = (char)random.Next('a', 'z' + 1);
+                span[i + 1] = (char)random.Next(StringExtensions.MinDiacriticsBlockValue, StringExtensions.LatinCapitalLetterLjWithCaron);
+                i += 2;
+            }
+
+            // Handle odd length tail directly inside the span
+            if (i < span.Length)
+            {
+                span[i] = 'x';
+            }
+        });
     }
 
     internal static string BuildSurrogatePairs(this Random rng, int length)
     {
-        StringBuilder sb = new(length);
-        int written = 0;
-        while (written + 1 < length)
+        if (length == 0) return string.Empty;
+        return string.Create(length, rng, static (span, random) =>
         {
-            int codepoint = rng.Next(StringExtensions.MinSurrogatePairValue, StringExtensions.MaxSurrogatePairValue);
-            sb.Append(char.ConvertFromUtf32(codepoint));
-            written += 2;
-        }
-        if (written < length)
-        {
-            sb.Append('x');
-        }
-        return sb.ToString();
+            int i = 0;
+            int maxPairIndex = span.Length - 1;
+
+            while (i < maxPairIndex)
+            {
+                int codepoint = random.Next(StringExtensions.MinSurrogatePairValue, StringExtensions.MaxSurrogatePairValue);
+
+                // Decode UTF-32 code point directly to UTF-16 surrogate pair
+                codepoint -= 0x10000;
+                span[i] = (char)((codepoint >> 10) + 0xD800);     // High surrogate
+                span[i + 1] = (char)((codepoint & 0x3FF) + 0xDC00); // Low surrogate
+
+                i += 2;
+            }
+
+            if (i < span.Length)
+            {
+                span[i] = 'x';
+            }
+        });
     }
 
     internal static void GetExcelCellInlineStringValues(this StringBuilder sb, XElement cell)
@@ -157,16 +177,5 @@ internal static class StringExtensionsInternal
         return [.. doc.Descendants()
             .Where(e => e.Name.LocalName == "si")
             .Select(si => string.Concat(si.Descendants().Where(e => e.Name.LocalName == "t").Select(t => t.Value)))];
-    }
-
-    private static char RandomNonMarkBmpChar(this Random rng)
-    {
-        while (true)
-        {
-            char c = (char)rng.Next(StringExtensions.MinUnicodeValue, StringExtensions.MaxUnicodeValue);
-            UnicodeCategory cat = CharUnicodeInfo.GetUnicodeCategory(c);
-            if (!cat.IsUnicodeCategoryMark())
-                return c;
-        }
     }
 }
