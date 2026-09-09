@@ -85,7 +85,8 @@ public static class StringExtensions
     {
         if (content is null)
             return null;
-
+        if (content.Length <= 1)
+            return content;
         // Avoid allocating char[] array manually
         return string.Create(content.Length, content, static (dest, src) =>
         {
@@ -131,8 +132,7 @@ public static class StringExtensions
 
         while (next < content.Length && content[next] > MaxAsciiValue)
         {
-            UnicodeCategory cat = CharUnicodeInfo.GetUnicodeCategory(content, next);
-            if (!cat.IsUnicodeCategoryMark())
+            if (!CharUnicodeInfo.GetUnicodeCategory(content, next).IsUnicodeCategoryMark())
             {
                 break;
             }

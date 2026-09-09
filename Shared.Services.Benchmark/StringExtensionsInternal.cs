@@ -14,7 +14,7 @@ internal static class StringExtensionsInternal
     private const char SPACE = ' ';
     private const string TEXT_ELEMENT = "t";
     private const string VALUE_ELEMENT = "v";
-    private static readonly char[] NonMarkChars = [.. Enumerable.Range(0x0080, 0x10000 - 0x0080)
+    private static readonly char[] BmpUnicodeChars = [.. Enumerable.Range(0x0080, 0x10000 - 0x0080)
             .Select(i => (char)i)
             .Where(c => !char.IsSurrogate(c) && 
                         !CharUnicodeInfo.GetUnicodeCategory(c).IsUnicodeCategoryMark())];
@@ -25,7 +25,7 @@ internal static class StringExtensionsInternal
 
         return string.Create(length, rng, static (span, random) =>
         {
-            random.GetItems(NonMarkChars, span);
+            random.GetItems(BmpUnicodeChars, span);
         });
     }
 
