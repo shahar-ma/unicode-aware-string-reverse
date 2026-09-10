@@ -1,0 +1,4 @@
+Hello World!
+This is a sample text file.
+Special characters: Éöâñµ£€
+Encoding Test File.

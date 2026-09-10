@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="Shared.Services.Benchmark/Shared.Services.Benchmark.csproj" Id="6b82425f-4c0f-4b46-bbbf-efe4417b395e" />
+  <Project Path="Shared.Services/Shared.Services.csproj" Id="e211c4c9-87d2-4a52-8042-5aef6f408bc3" />
+  <Project Path="Shared.Services.Test/Shared.Services.Test.csproj" Id="1db41494-9bd1-4af3-97e3-6e0400a6ec40" />
+</Solution>
